@@ -1,0 +1,408 @@
+{{> head}}
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LibraTrack - Integrated Library Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        libra: {
+                            deep: '#1e1b4b',
+                            accent: '#4f46e5',
+                            accentHover: '#4338ca',
+                            lightBg: '#f8fafc',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .view-section {
+            display: none;
+        }
+        .view-section.active-view {
+            display: flex;
+        }
+    </style>
+    <div id="view-user-dashboard" class="view-section active-view flex-1 flex h-screen overflow-hidden bg-slate-100">
+        <!-- User Sidebar -->
+        <aside class="w-72 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800">
+            <div class="h-20 flex items-center px-6 bg-slate-950 justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white leading-tight text-base">User Dashboard</h1>
+                        <span class="text-[11px] text-indigo-300 font-semibold block">Student Access</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <div class="px-3 pb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">My Portal</div>
+                
+                <a href="#" onclick="switchUserTab('profile'); return false" id="user-nav-profile" class="user-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white shadow-sm">
+                    <i class="fa-solid fa-id-card w-5 text-center"></i>
+                    <span>Profile Details</span>
+                </a>
+                <a href="#" onclick="switchUserTab('available'); return false" id="user-nav-available" class="user-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-book-open w-5 text-center"></i>
+                    <span>Available Books</span>
+                </a>
+                <a href="#" onclick="switchUserTab('borrowing'); return false" id="user-nav-borrowing" class="user-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-book-reader w-5 text-center"></i>
+                    <span>Borrowing Books</span>
+                    <span id="user-badge-borrowing" class="ml-auto bg-indigo-500/30 text-indigo-200 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+                </a>
+                <a href="#" onclick="switchUserTab('returned'); return false" id="user-nav-returned" class="user-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-clock-rotate-left w-5 text-center"></i>
+                    <span>Returned History</span>
+                </a>
+                <a href="#" onclick="switchUserTab('payments'); return false" id="user-nav-payments" class="user-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-wallet w-5 text-center"></i>
+                    <span>Payments & Balance</span>
+                    <span id="user-badge-balance" class="ml-auto bg-rose-500/20 text-rose-300 text-xs px-2 py-0.5 rounded-full font-bold">$0.00</span>
+                </a>
+            </nav>
+
+            <!-- User Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center border border-indigo-500/30">
+                        {{userInitials}}
+                    </div>
+                    <div class="min-w-0">
+                        <p id="user-sidebar-name" class="text-xs font-bold text-white truncate">{{user.name}}</p>
+                        <p class="text-[10px] text-slate-400 truncate">#{{user.id}}</p>
+                    </div>
+                </div>
+                <a href="/logout" class="text-slate-400 hover:text-rose-400 p-2 text-sm" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- User Main Workspace -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Top Navigation Header -->
+            <header class="h-20 bg-libra-deep text-white px-6 flex items-center justify-between border-b border-indigo-950 shadow-md">
+                <div>
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <span>LibraTrack Patron Portal</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 bg-indigo-500/30 text-indigo-200 border border-indigo-400/20 rounded-full">Student User</span>
+                    </h2>
+                    <p class="text-xs text-indigo-200/80">Manage your active checkouts, profile, and library dues</p>
+                </div>
+                <div class="flex items-center gap-3">
+                        <a href="/" class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center gap-2">
+                        <i class="fa-solid fa-house"></i> Public Home Page
+                        </a>
+                    <a href="/logout" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow">
+                        Logout
+                    </a>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+
+                <!-- USER TAB 1: PROFILE -->
+                <section id="user-tab-profile" class="user-tab-content space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-3xl space-y-6">
+                        <div class="flex items-center gap-4 border-b border-slate-100 pb-6">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-700 font-extrabold text-2xl flex items-center justify-center border border-indigo-200">
+                                {{userInitials}}
+                            </div>
+                            <div>
+                                <h3 id="user-profile-name" class="text-xl font-extrabold text-slate-900">{{user.name}}</h3>
+                                <p class="text-xs text-slate-500">Registered Library Patron • {{user.email}}</p>
+                                <span class="inline-block mt-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full">Account Active</span>
+                            </div>
+                        </div>
+
+                        <form id="user-profile-form" method="POST" action="/profile" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Patron ID</label>
+                                    <input type="text" id="user-profile-id" value="{{user.id}}" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-600">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                                    <input type="text" id="user-profile-input-name" name="name" value="{{user.name}}" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+                                    <input type="email" id="user-profile-input-email" name="email" value="{{user.email}}" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Membership Category</label>
+                                    <input type="text" id="user-profile-type" value="{{user.role}}" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-sm font-semibold text-slate-600">
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                                <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow">
+                                    Update Profile Info
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- USER TAB 2: AVAILABLE BOOKS -->
+                <section id="user-tab-available" class="user-tab-content hidden space-y-6">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between gap-4">
+                        <div class="relative w-full sm:w-96">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="user-catalog-search" oninput="renderUserAvailableBooks()" placeholder="Search available books..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div id="user-available-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Dynamic Cards -->
+                    </div>
+                </section>
+
+                <!-- USER TAB 3: BORROWING BOOKS -->
+                <section id="user-tab-borrowing" class="user-tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 font-extrabold text-slate-900 text-base">
+                            Active Borrowed Books
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-extrabold uppercase border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Book Title</th>
+                                        <th class="py-3.5 px-4">Issue Date</th>
+                                        <th class="py-3.5 px-4">Due Return Date</th>
+                                        <th class="py-3.5 px-4 text-center">Status</th>
+                                        <th class="py-3.5 px-4 text-center">Accrued Fine</th>
+                                        <th class="py-3.5 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-borrowing-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- USER TAB 4: RETURNED BOOKS -->
+                <section id="user-tab-returned" class="user-tab-content hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 font-extrabold text-slate-900 text-base">
+                            Borrowing & Return History Log
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-extrabold uppercase border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Transaction ID</th>
+                                        <th class="py-3.5 px-4">Book Title</th>
+                                        <th class="py-3.5 px-4">Issued On</th>
+                                        <th class="py-3.5 px-4">Returned On</th>
+                                        <th class="py-3.5 px-4 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-returned-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- USER TAB 5: PAYMENTS & BALANCE -->
+                <section id="user-tab-payments" class="user-tab-content hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Outstanding Fee Balance</span>
+                            <h3 id="user-total-balance-display" class="text-3xl font-extrabold text-rose-600">$0.00</h3>
+                            <p class="text-xs text-slate-500">Accrued late fees from overdue book returns ($0.50/day rate).</p>
+                            <button onclick="openPayModal()" id="user-pay-now-btn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow">
+                                Pay Outstanding Balance
+                            </button>
+                        </div>
+
+                        <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                            <h4 class="font-extrabold text-slate-900 text-base">Fine Breakdown & Payment Ledger</h4>
+                            <div class="overflow-x-auto custom-scrollbar">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs font-extrabold uppercase border-b border-slate-200">
+                                            <th class="py-3 px-3">Item / Book</th>
+                                            <th class="py-3 px-3">Due Date</th>
+                                            <th class="py-3 px-3">Fine Amount</th>
+                                            <th class="py-3 px-3 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="user-payments-tbody" class="divide-y divide-slate-100 text-xs">
+                                        <!-- Dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let availableBooks = [];
+
+        async function loadAvailableBooks() {
+            const grid = document.getElementById('user-available-grid');
+            if (grid) grid.innerHTML = '<div class="col-span-full p-8 text-center text-slate-500">Loading available books...</div>';
+            try {
+                const response = await fetch('/api/books');
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Could not load books.');
+                availableBooks = data;
+                renderUserAvailableBooks();
+            } catch (error) {
+                if (grid) grid.innerHTML = `<div class="col-span-full p-8 text-center text-rose-600">${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        }
+
+        function renderUserAvailableBooks() {
+            const grid = document.getElementById('user-available-grid');
+            const search = (document.getElementById('user-catalog-search')?.value || '').trim().toLowerCase();
+            if (!grid) return;
+            grid.innerHTML = '';
+            const matches = availableBooks.filter((book) => Number(book.availableCopies) > 0 &&
+                [book.title, book.author, book.isbn, book.category].some((value) => String(value || '').toLowerCase().includes(search)));
+
+            if (!matches.length) {
+                grid.innerHTML = '<div class="col-span-full p-8 text-center text-slate-500">No available books found.</div>';
+                return;
+            }
+
+            matches.forEach((book) => {
+                const card = document.createElement('article');
+                card.className = 'bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between';
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">${escapeHtml(book.category)}</span>
+                            <span class="text-xs font-mono text-slate-400">${escapeHtml(book.shelf)}</span>
+                        </div>
+                        <h3 class="font-extrabold text-slate-900">${escapeHtml(book.title)}</h3>
+                        <p class="text-sm text-slate-500">${escapeHtml(book.author)}</p>
+                        <p class="text-xs text-slate-400">ISBN: ${escapeHtml(book.isbn)}</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <span class="text-xs font-bold text-emerald-600">${Number(book.availableCopies)} available</span>
+                        <button type="button" onclick="borrowCatalogBook(${Number(book.id)})" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl">Borrow</button>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        async function borrowCatalogBook(bookId) {
+            try {
+                const response = await fetch(`/api/books/${bookId}/borrow`, { method: 'POST' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Could not borrow this book.');
+                availableBooks = availableBooks.map((book) => book.id === bookId ? data.book : book);
+                renderUserAvailableBooks();
+                await loadAvailableBooks();
+                await loadUserLoans();
+                alert(`You borrowed “${data.book.title}”. Due date: ${data.loan.dueDate}`);
+            } catch (error) {
+                alert(error.message);
+                loadAvailableBooks();
+            }
+        }
+
+        async function loadUserLoans() {
+            try {
+                const response = await fetch('/api/loans');
+                const loans = await response.json();
+                if (!response.ok) throw new Error(loans.error || 'Could not load your loans.');
+
+                const activeBody = document.getElementById('user-borrowing-tbody');
+                const historyBody = document.getElementById('user-returned-tbody');
+                const active = loans.filter((loan) => loan.status === 'borrowed');
+                const returned = loans.filter((loan) => loan.status === 'returned');
+                if (activeBody) activeBody.innerHTML = active.length ? active.map((loan) => `
+                    <tr class="border-b border-slate-100">
+                        <td class="py-3 px-4 font-bold">${escapeHtml(loan.Book?.title || 'Book')}</td>
+                        <td class="py-3 px-4 text-xs">${escapeHtml(loan.createdAt?.slice(0, 10) || '')}</td>
+                        <td class="py-3 px-4 text-xs">${escapeHtml(loan.dueDate)}</td>
+                        <td class="py-3 px-4 text-center"><span class="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">Borrowed</span></td>
+                        <td class="py-3 px-4 text-center">—</td>
+                        <td class="py-3 px-4 text-right"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold"><i class="fa-solid fa-book"></i> Borrowed</span></td>
+                    </tr>`).join('') : '<tr><td colspan="6" class="p-6 text-center text-slate-400">No active book loans.</td></tr>';
+                if (historyBody) historyBody.innerHTML = returned.length ? returned.map((loan) => `
+                    <tr class="border-b border-slate-100">
+                        <td class="py-3 px-4 font-mono text-xs">${Number(loan.id)}</td>
+                        <td class="py-3 px-4 font-bold">${escapeHtml(loan.Book?.title || 'Book')}</td>
+                        <td class="py-3 px-4 text-xs">${escapeHtml(loan.createdAt?.slice(0, 10) || '')}</td>
+                        <td class="py-3 px-4 text-xs">${escapeHtml(loan.returnedAt || '')}</td>
+                        <td class="py-3 px-4 text-center"><span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">Returned</span></td>
+                    </tr>`).join('') : '<tr><td colspan="5" class="p-6 text-center text-slate-400">No past returned books logged.</td></tr>';
+                const badge = document.getElementById('user-badge-borrowing');
+                if (badge) badge.textContent = active.length;
+            } catch (error) {
+                console.error('Could not load user loans:', error);
+            }
+        }
+
+        function switchUserTab(tabKey) {
+            document.querySelectorAll('.user-nav-item').forEach((item) => {
+                item.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                item.classList.add('text-slate-400');
+            });
+            document.querySelectorAll('.user-tab-content').forEach((tab) => tab.classList.add('hidden'));
+
+            document.getElementById(`user-nav-${tabKey}`)?.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+            document.getElementById(`user-nav-${tabKey}`)?.classList.remove('text-slate-400');
+            document.getElementById(`user-tab-${tabKey}`)?.classList.remove('hidden');
+            if (tabKey === 'available') loadAvailableBooks();
+            if (tabKey === 'borrowing' || tabKey === 'returned') loadUserLoans();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAvailableBooks();
+            loadUserLoans();
+        });
+
+    </script>
+{{> footer}}

@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: { sans: ['Inter', 'sans-serif'] },
+                colors: {
+                    libra: {
+                        deep: '#1e1b4b',
+                        accent: '#4f46e5',
+                        accentHover: '#4338ca',
+                        lightBg: '#f8fafc'
+                    }
+                }
+            }
+        }
+    };
+</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .view-section {
+            display: none;
+        }
+        .view-section.active-view {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col custom-scrollbar">
+<div id="view-admin-dashboard" class="view-section active-view flex-1 flex h-screen overflow-hidden bg-slate-100">
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+        <!-- Admin Sidebar -->
+        <aside class="w-72 bg-slate-950 text-slate-300 flex flex-col shrink-0 border-r border-slate-800">
+            <div class="h-20 flex items-center px-6 bg-slate-900 justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xl shadow-lg">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-white leading-tight text-base">Admin Portal</h1>
+                        <span class="text-[11px] text-indigo-400 font-semibold block">Full System Access</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <div class="px-3 pb-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Management</div>
+
+                <a href="#" onclick="switchAdminTab('overview'); return false" id="admin-nav-overview" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 text-white shadow-sm">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>System Overview</span>
+                </a>
+                <a href="#" onclick="switchAdminTab('inventory'); return false" id="admin-nav-inventory" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-books w-5 text-center"></i>
+                    <span>Book Inventory Catalog</span>
+                </a>
+                <a href="#" onclick="switchAdminTab('borrowed'); return false" id="admin-nav-borrowed" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-right-left w-5 text-center"></i>
+                    <span>Borrowed & Return Logs</span>
+                    <span id="admin-badge-overdue" class="ml-auto bg-rose-500/20 text-rose-300 text-xs px-2 py-0.5 rounded-full font-bold hidden">0</span>
+                </a>
+                <a href="#" onclick="switchAdminTab('payments'); return false" id="admin-nav-payments" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-receipt w-5 text-center"></i>
+                    <span>Student Balances & Fines</span>
+                </a>
+                <a href="#" onclick="switchAdminTab('patrons'); return false" id="admin-nav-patrons" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
+                    <i class="fa-solid fa-users w-5 text-center"></i>
+                    <span>Registered Patrons</span>
+                </a>
+            </nav>
+
+            <!-- Admin Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900 flex items-center justify-between">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center border border-indigo-500/30">
+                        {{adminInitials}}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-white truncate">{{adminUser.name}}</p>
+                        <p class="text-[10px] text-slate-400 truncate">{{adminUser.email}}</p>
+                    </div>
+                </div>
+                <a href="/logout" class="text-slate-400 hover:text-rose-400 p-2 text-sm" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Admin Workspace -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Header -->
+            <header class="h-20 bg-libra-deep text-white px-6 flex items-center justify-between border-b border-indigo-950 shadow-md">
+                <div>
+                    <h2 class="text-lg font-bold flex items-center gap-2">
+                        <span>LibraTrack Admin Workspace</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 bg-indigo-500/30 text-indigo-200 border border-indigo-400/20 rounded-full">System Administrator</span>
+                    </h2>
+                    <p class="text-xs text-indigo-200/80">Full management control for catalog, checkouts, returns, and financial balances</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/" class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all border border-white/10 flex items-center gap-2">
+                        <i class="fa-solid fa-house"></i> Public Home Page
+                    </a>
+                    <a href="/logout" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow">
+                        Logout
+                    </a>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+
+                <!-- ADMIN TAB 1: OVERVIEW -->
+                <section id="admin-tab-overview" class="admin-tab-content space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Total Inventory</span>
+                            <h3 id="admin-stat-total-books" class="text-3xl font-extrabold text-slate-900 mt-2">0</h3>
+                            <p class="text-xs text-slate-500 mt-1">Cataloged physical copies</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Active Borrowings</span>
+                            <h3 id="admin-stat-active-loans" class="text-3xl font-extrabold text-amber-600 mt-2">0</h3>
+                            <p class="text-xs text-slate-500 mt-1">Checked out by students</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Overdue Items</span>
+                            <h3 id="admin-stat-overdue" class="text-3xl font-extrabold text-rose-600 mt-2">0</h3>
+                            <p class="text-xs text-rose-500 mt-1">Requires immediate return</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Total Accrued Fines</span>
+                            <h3 id="admin-stat-total-fines" class="text-3xl font-extrabold text-indigo-600 mt-2">$0.00</h3>
+                            <p class="text-xs text-slate-500 mt-1">Student penalty balance</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                            <h3 class="font-extrabold text-slate-900 text-base">Quick Admin Actions</h3>
+                            <div class="space-y-3">
+                                <button onclick="startNewBookEntry()" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all font-bold text-xs text-slate-800 flex items-center justify-between">
+                                    <span><i class="fa-solid fa-plus text-indigo-600 mr-2"></i> Add New Book Title</span>
+                                    <i class="fa-solid fa-chevron-right text-slate-400"></i>
+                                </button>
+                                <button onclick="openModal('modal-issue-book')" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all font-bold text-xs text-slate-800 flex items-center justify-between">
+                                    <span><i class="fa-solid fa-hand-holding text-amber-500 mr-2"></i> Issue Book to Student</span>
+                                    <i class="fa-solid fa-chevron-right text-slate-400"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                            <h3 class="font-extrabold text-slate-900 text-base">Recent Circulation Feed</h3>
+                            <div id="admin-recent-feed" class="space-y-3 max-h-[260px] overflow-y-auto custom-scrollbar">
+                                <!-- Dynamic -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ADMIN TAB 2: INVENTORY -->
+                <section id="admin-tab-inventory" class="admin-tab-content hidden space-y-6">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+                        <div class="relative w-full md:w-96">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="admin-inventory-search" oninput="renderAdminInventoryTable()" placeholder="Search title, author, or ISBN..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <button onclick="startNewBookEntry()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add New Book
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-extrabold uppercase border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Book Title & Author</th>
+                                        <th class="py-3.5 px-4">ISBN</th>
+                                        <th class="py-3.5 px-4">Category</th>
+                                        <th class="py-3.5 px-4 text-center">Shelf</th>
+                                        <th class="py-3.5 px-4 text-center">Total Copies</th>
+                                        <th class="py-3.5 px-4 text-center">Available</th>
+                                        <th class="py-3.5 px-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-inventory-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ADMIN TAB 3: BORROWED & RETURN LOGS -->
+                <section id="admin-tab-borrowed" class="admin-tab-content hidden space-y-6">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+                        <div class="relative w-full md:w-96">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="admin-borrowed-search" oninput="renderAdminBorrowedTable()" placeholder="Search transactions by student or book..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <button onclick="openModal('modal-issue-book')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow flex items-center gap-2">
+                            <i class="fa-solid fa-hand-holding"></i> Issue New Loan
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-extrabold uppercase border-b border-slate-200">
+                                        <th class="py-3.5 px-4">TRX ID</th>
+                                        <th class="py-3.5 px-4">Book Title</th>
+                                        <th class="py-3.5 px-4">Student Name</th>
+                                        <th class="py-3.5 px-4">Issue Date</th>
+                                        <th class="py-3.5 px-4">Due Date</th>
+                                        <th class="py-3.5 px-4 text-center">Status</th>
+                                        <th class="py-3.5 px-4 text-center">Fine Rate</th>
+                                        <th class="py-3.5 px-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-borrowed-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ADMIN TAB 4: PAYMENTS & BALANCES -->
+                <section id="admin-tab-payments" class="admin-tab-content hidden space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div>
+                            <h3 class="font-extrabold text-slate-900 text-lg">Student Fine Balances & Payment Processing</h3>
+                            <p class="text-xs text-slate-500">View student overdue penalties and manually settle account balances.</p>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs font-extrabold uppercase border-b border-slate-200">
+                                        <th class="py-3.5 px-4">Patron ID</th>
+                                        <th class="py-3.5 px-4">Student Name</th>
+                                        <th class="py-3.5 px-4">Category</th>
+                                        <th class="py-3.5 px-4 text-center">Overdue Loans</th>
+                                        <th class="py-3.5 px-4 text-center">Outstanding Balance</th>
+                                        <th class="py-3.5 px-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-payments-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ADMIN TAB 5: PATRONS -->
+                <section id="admin-tab-patrons" class="admin-tab-content hidden space-y-6">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                        <div>
+                            <h3 class="font-extrabold text-slate-900">Registered Library Patrons</h3>
+                            <p class="text-xs text-slate-500">Manage student memberships and active borrow status</p>
+                        </div>
+                        <button onclick="openModal('modal-add-patron')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> Add New Patron
+                        </button>
+                    </div>
+
+                    <div id="admin-patrons-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Dynamic -->
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- LOGIN MODAL -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div class="bg-libra-deep text-white p-6 text-center relative">
+                <button onclick="closeModal('modal-login')" class="absolute right-4 top-4 text-indigo-300 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-2 shadow-lg">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                </div>
+                <h3 class="font-extrabold text-xl">System Portal Authentication</h3>
+                <p class="text-xs text-indigo-200 mt-1">Select account type to enter dashboard workspace</p>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <!-- Role Selector -->
+                <div class="flex rounded-xl bg-slate-100 p-1 font-bold text-xs">
+                    <button type="button" id="role-btn-user" onclick="setLoginRole('user')" class="flex-1 py-2.5 rounded-lg text-indigo-700 bg-white shadow-sm transition-all text-center">
+                        <i class="fa-solid fa-user mr-1.5"></i> Student / User
+                    </button>
+                    <button type="button" id="role-btn-admin" onclick="setLoginRole('admin')" class="flex-1 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all text-center">
+                        <i class="fa-solid fa-shield-halved mr-1.5"></i> Admin / Staff
+                    </button>
+                </div>
+
+                <!-- Form -->
+                <form id="form-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+                        <input type="email" id="login-email" required class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+                        <input type="password" id="login-password" value="••••••••" required class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg">
+                        Login & Open Dashboard
+                    </button>
+                </form>
+
+                <!-- Quick Fill Buttons -->
+                <div class="pt-4 border-t border-slate-100 text-center space-y-2">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Quick Demo Credentials</p>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="quickFillLogin('user')" class="flex-1 py-2 bg-slate-100 hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all">
+                            Demo User
+                        </button>
+                        <button type="button" onclick="quickFillLogin('admin')" class="flex-1 py-2 bg-slate-100 hover:bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all">
+                            Demo Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT BOOK (ADMIN) -->
+    <div id="modal-add-book" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 id="modal-book-title" class="font-extrabold text-slate-900 text-base">Add New Book Record</h3>
+                <button onclick="closeModal('modal-add-book')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-add-book" onsubmit="saveBookRecord(event)" class="p-6 space-y-4">
+                <input type="hidden" id="book-edit-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Book Title *</label>
+                    <input type="text" id="book-title-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Author *</label>
+                        <input type="text" id="book-author-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">ISBN Code *</label>
+                        <input type="text" id="book-isbn-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category *</label>
+                        <select id="book-category-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                            <option value="Science & Tech">Science & Tech</option>
+                            <option value="Fiction">Fiction</option>
+                            <option value="History">History</option>
+                            <option value="Biography">Biography</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Shelf Location *</label>
+                        <input type="text" id="book-shelf-input" required placeholder="e.g. Rack A-1" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Total Quantity Copies *</label>
+                    <input type="number" id="book-quantity-input" min="1" value="4" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('modal-add-book')" class="px-4 py-2 border rounded-xl text-sm font-semibold">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow">Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ISSUE BOOK (ADMIN) -->
+    <div id="modal-issue-book" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 class="font-extrabold text-slate-900 text-base">Issue Book Checkout Loan</h3>
+                <button onclick="closeModal('modal-issue-book')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-issue-book" onsubmit="saveIssueLoan(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Student Patron *</label>
+                    <select id="issue-patron-select" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Available Book *</label>
+                    <select id="issue-book-select" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                        <!-- Dynamic -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Issue Date</label>
+                        <input type="date" id="issue-date-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Due Return Date</label>
+                        <input type="date" id="issue-due-date-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('modal-issue-book')" class="px-4 py-2 border rounded-xl text-sm font-semibold">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow">Confirm Issue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD PATRON (ADMIN) -->
+    <div id="modal-add-patron" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 class="font-extrabold text-slate-900 text-base">Add New Student Patron</h3>
+                <button onclick="closeModal('modal-add-patron')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-add-patron" onsubmit="saveNewPatron(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Full Student Name *</label>
+                    <input type="text" id="patron-name-input" required placeholder="e.g. Samantha Lee" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address *</label>
+                    <input type="email" id="patron-email-input" required placeholder="e.g. samantha@university.edu" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Membership Category *</label>
+                    <select id="patron-type-input" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm">
+                        <option value="Student">Student</option>
+                        <option value="Faculty">Faculty</option>
+                        <option value="General Member">General Member</option>
+                    </select>
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('modal-add-patron')" class="px-4 py-2 border rounded-xl text-sm font-semibold">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow">Register Patron</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PAY USER BALANCE -->
+    <div id="modal-pay-balance" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="p-6 text-center space-y-4">
+                <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold mx-auto">
+                    <i class="fa-solid fa-credit-card"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-lg">Settle Overdue Balance</h3>
+                    <p class="text-xs text-slate-500 mt-1">Pay accrued penalty balance in simulated payment environment</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <p class="text-xs text-slate-500 font-semibold">Amount Due</p>
+                    <p id="pay-modal-amount" class="text-2xl font-extrabold text-rose-600">$0.00</p>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeModal('modal-pay-balance')" class="flex-1 py-2.5 border rounded-xl text-sm font-semibold">Cancel</button>
+                    <button onclick="processUserPayment()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow">Confirm Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+    <script>
+        // --- GLOBAL DATA STORE ---
+        let currentUser = null; // { role: 'user'|'admin', data: patronObj }
+        let currentLoginRole = 'user';
+
+        let books = [];
+
+        let patrons = [];
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const pastDueStr = new Date(Date.now() - 15 * 86400000).toISOString().split('T')[0];
+        const overdueDueDateStr = new Date(Date.now() - 4 * 86400000).toISOString().split('T')[0];
+        const futureDueDateStr = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
+        let transactions = [];
+
+        const apiRequest = async (url, options = {}) => {
+            const response = await fetch(url, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'The request could not be completed.');
+            return data;
+        };
+
+        const refreshLibraryViews = async () => {
+            try {
+                [books, transactions] = await Promise.all([
+                    apiRequest('/api/books'),
+                    apiRequest('/api/loans')
+                ]);
+                renderAdminDashboard();
+            } catch (error) {
+                showToast(error.message);
+            }
+        };
+
+        // --- INIT APP ---
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshLibraryViews();
+        });
+
+        // --- NAVIGATION BETWEEN PUBLIC, USER, ADMIN VIEWS ---
+        function showView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            const target = document.getElementById(viewId);
+            if (target) target.classList.add('active-view');
+
+            if (viewId === 'view-user-dashboard') {
+                renderUserDashboard();
+            } else if (viewId === 'view-admin-dashboard') {
+                renderAdminDashboard();
+            } else if (viewId === 'view-home') {
+                renderPublicCatalog();
+                updatePublicStats();
+            }
+        }
+
+        function showPublicView(section) {
+            showView('view-home');
+            if (section === 'catalog') {
+                document.getElementById('public-catalog-section').scrollIntoView({ behavior: 'smooth' });
+            } else if (section === 'services') {
+                document.getElementById('services-section').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // --- LOGIN & ROLE SYSTEM ---
+        function setLoginRole(role) {
+            currentLoginRole = role;
+            const btnUser = document.getElementById('role-btn-user');
+            const btnAdmin = document.getElementById('role-btn-admin');
+            const emailInput = document.getElementById('login-email');
+
+            if (role === 'user') {
+                btnUser.className = "flex-1 py-2.5 rounded-lg text-indigo-700 bg-white shadow-sm transition-all text-center font-bold";
+                btnAdmin.className = "flex-1 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all text-center font-bold";
+                emailInput.value = "student@libratrack.edu";
+            } else {
+                btnAdmin.className = "flex-1 py-2.5 rounded-lg text-indigo-700 bg-white shadow-sm transition-all text-center font-bold";
+                btnUser.className = "flex-1 py-2.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all text-center font-bold";
+                emailInput.value = "admin@libratrack.edu";
+            }
+        }
+
+        function quickFillLogin(role) {
+            setLoginRole(role);
+            if (role === 'user') {
+                document.getElementById('login-email').value = "student@libratrack.edu";
+            } else {
+                document.getElementById('login-email').value = "admin@libratrack.edu";
+            }
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+
+            if (currentLoginRole === 'admin') {
+                currentUser = { role: 'admin', data: { name: 'System Head Librarian', email } };
+                showToast("Logged in as System Administrator");
+                closeModal('modal-login');
+                showView('view-admin-dashboard');
+            } else {
+                let patron = patrons.find(p => p.email.toLowerCase() === email.toLowerCase());
+                if (!patron) {
+                    patron = patrons[0];
+                }
+                currentUser = { role: 'user', data: patron };
+                showToast(`Welcome back, ${patron.name}!`);
+                closeModal('modal-login');
+                showView('view-user-dashboard');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            showToast("Logged out successfully");
+            showView('view-home');
+        }
+
+        // --- PUBLIC HOME LOGIC ---
+        function updatePublicStats() {
+            const totalTitles = books.length;
+            const available = books.reduce((acc, b) => acc + parseInt(b.availableCopies), 0);
+            
+            document.getElementById('public-stat-titles').textContent = totalTitles;
+            document.getElementById('public-stat-available').textContent = available;
+            document.getElementById('public-stat-patrons').textContent = patrons.length;
+        }
+
+        function renderPublicCatalog() {
+            const grid = document.getElementById('public-books-grid');
+            const searchVal = (document.getElementById('public-hero-search-input').value || '').toLowerCase();
+            const categoryVal = document.getElementById('public-category-filter').value;
+
+            grid.innerHTML = '';
+
+            const filtered = books.filter(b => {
+                const matchesSearch = b.title.toLowerCase().includes(searchVal) ||
+                                      b.author.toLowerCase().includes(searchVal) ||
+                                      b.isbn.toLowerCase().includes(searchVal);
+                const matchesCat = categoryVal === 'ALL' || b.category === categoryVal;
+                return matchesSearch && matchesCat;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 font-semibold">No books match your search parameters.</div>`;
+                return;
+            }
+
+            filtered.forEach(b => {
+                const isAvailable = b.availableCopies > 0;
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="w-full h-36 bg-slate-100 rounded-xl flex items-center justify-center text-indigo-400 border border-slate-200 text-3xl">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">${escapeHtml(b.category)}</span>
+                            <h4 class="font-extrabold text-slate-900 text-base leading-snug line-clamp-1 mt-0.5">${escapeHtml(b.title)}</h4>
+                            <p class="text-xs text-slate-500">${escapeHtml(b.author)}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="font-semibold text-slate-500 font-mono">${b.shelf}</span>
+                        <span class="font-bold ${isAvailable ? 'text-emerald-600' : 'text-rose-500'}">
+                            ${isAvailable ? b.availableCopies + ' Copies Left' : 'Out of Stock'}
+                        </span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function executePublicSearch() {
+            renderPublicCatalog();
+            document.getElementById('public-catalog-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- USER DASHBOARD LOGIC ---
+        function switchUserTab(tabKey) {
+            document.querySelectorAll('.user-nav-item').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                el.classList.add('text-slate-400', 'hover:bg-slate-800');
+            });
+            const activeNav = document.getElementById(`user-nav-${tabKey}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            document.querySelectorAll('.user-tab-content').forEach(el => el.classList.add('hidden'));
+            const activeTab = document.getElementById(`user-tab-${tabKey}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+        }
+
+        function renderUserDashboard() {
+            if (!currentUser || currentUser.role !== 'user') return;
+            const patron = currentUser.data;
+
+            // Profile Tab
+            document.getElementById('user-sidebar-name').textContent = patron.name;
+            document.getElementById('user-profile-name').textContent = patron.name;
+            document.getElementById('user-profile-id').value = patron.id;
+            document.getElementById('user-profile-input-name').value = patron.name;
+            document.getElementById('user-profile-input-email').value = patron.email;
+            document.getElementById('user-profile-type').value = patron.type;
+
+            renderUserAvailableBooks();
+            renderUserBorrowings();
+            renderUserReturned();
+            renderUserPayments();
+        }
+
+        function saveUserProfile(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+            const newName = document.getElementById('user-profile-input-name').value;
+            const newEmail = document.getElementById('user-profile-input-email').value;
+
+            currentUser.data.name = newName;
+            currentUser.data.email = newEmail;
+
+            // Sync with global patron list
+            const p = patrons.find(x => x.id === currentUser.data.id);
+            if (p) {
+                p.name = newName;
+                p.email = newEmail;
+            }
+
+            showToast("Profile information updated!");
+            renderUserDashboard();
+        }
+
+        function renderUserAvailableBooks() {
+            const grid = document.getElementById('user-available-grid');
+            const searchVal = (document.getElementById('user-catalog-search').value || '').toLowerCase();
+            grid.innerHTML = '';
+
+            const available = books.filter(b => b.availableCopies > 0 && (b.title.toLowerCase().includes(searchVal) || b.author.toLowerCase().includes(searchVal)));
+
+            available.forEach(b => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">${escapeHtml(b.category)}</span>
+                            <span class="text-xs font-mono font-semibold text-slate-400">${b.shelf}</span>
+                        </div>
+                        <h4 class="font-extrabold text-slate-900 text-base">${escapeHtml(b.title)}</h4>
+                        <p class="text-xs text-slate-500">${escapeHtml(b.author)}</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600">${b.availableCopies} available</span>
+                        <button onclick="requestUserBorrow('${b.id}')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-all shadow">
+                            Reserve Book
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderUserBorrowings() {
+            const tbody = document.getElementById('user-borrowing-tbody');
+            tbody.innerHTML = '';
+            if (!currentUser) return;
+
+            const myActive = transactions.filter(t => t.patronId === currentUser.data.id && (t.status === 'ISSUED' || t.status === 'OVERDUE'));
+
+            document.getElementById('user-badge-borrowing').textContent = myActive.length;
+
+            if (myActive.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No active book loans.</td></tr>`;
+                return;
+            }
+
+            myActive.forEach(t => {
+                const fineInfo = calculateFine(t.dueDate);
+                if (fineInfo.isOverdue) t.status = 'OVERDUE';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(t.bookTitle)}</td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${t.issueDate}</td>
+                    <td class="py-3 px-4 text-xs font-semibold text-slate-800">${t.dueDate}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${t.status === 'OVERDUE' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'}">
+                            ${t.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center font-bold ${fineInfo.isOverdue ? 'text-rose-600' : 'text-slate-400'}">
+                        $${fineInfo.fine.toFixed(2)}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="requestUserRenewal('${t.id}')" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-colors">
+                            Request Extension
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function requestUserRenewal(trxId) {
+            const trx = transactions.find(t => t.id === trxId);
+            if (!trx) return;
+
+            const currentDue = new Date(trx.dueDate);
+            currentDue.setDate(currentDue.getDate() + 7);
+            trx.dueDate = currentDue.toISOString().split('T')[0];
+
+            showToast("Requested & granted 7-day loan extension!");
+            renderUserDashboard();
+        }
+
+        function renderUserReturned() {
+            const tbody = document.getElementById('user-returned-tbody');
+            tbody.innerHTML = '';
+            if (!currentUser) return;
+
+            const history = transactions.filter(t => t.patronId === currentUser.data.id && t.status === 'RETURNED');
+
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No past returned books logged.</td></tr>`;
+                return;
+            }
+
+            history.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">${t.id}</td>
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(t.bookTitle)}</td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${t.issueDate}</td>
+                    <td class="py-3 px-4 text-xs font-semibold text-slate-800">${t.returnDate}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Returned</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderUserPayments() {
+            const tbody = document.getElementById('user-payments-tbody');
+            tbody.innerHTML = '';
+            if (!currentUser) return;
+
+            let totalBalance = 0;
+            const myTrxs = transactions.filter(t => t.patronId === currentUser.data.id);
+
+            myTrxs.forEach(t => {
+                const fineInfo = calculateFine(t.dueDate);
+                if (fineInfo.isOverdue && !t.finePaid) {
+                    totalBalance += fineInfo.fine;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-3 font-bold text-slate-800">${escapeHtml(t.bookTitle)}</td>
+                        <td class="py-2.5 px-3 text-slate-500">${t.dueDate}</td>
+                        <td class="py-2.5 px-3 font-bold text-rose-600">$${fineInfo.fine.toFixed(2)}</td>
+                        <td class="py-2.5 px-3 text-center">
+                            <span class="px-2 py-0.5 bg-rose-100 text-rose-700 rounded-full font-bold">Unpaid Late Fee</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            if (totalBalance === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400">No pending balances or fines. Account is in good standing!</td></tr>`;
+            }
+
+            document.getElementById('user-total-balance-display').textContent = `$${totalBalance.toFixed(2)}`;
+            document.getElementById('user-badge-balance').textContent = `$${totalBalance.toFixed(2)}`;
+            
+            const payBtn = document.getElementById('user-pay-now-btn');
+            if (totalBalance > 0) {
+                payBtn.disabled = false;
+                payBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                payBtn.disabled = true;
+                payBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function openPayModal() {
+            if (!currentUser) return;
+            let totalBalance = 0;
+            transactions.filter(t => t.patronId === currentUser.data.id).forEach(t => {
+                const fineInfo = calculateFine(t.dueDate);
+                if (fineInfo.isOverdue && !t.finePaid) totalBalance += fineInfo.fine;
+            });
+            document.getElementById('pay-modal-amount').textContent = `$${totalBalance.toFixed(2)}`;
+            openModal('modal-pay-balance');
+        }
+
+        function processUserPayment() {
+            if (!currentUser) return;
+            transactions.filter(t => t.patronId === currentUser.data.id).forEach(t => {
+                t.finePaid = true;
+            });
+            showToast("Payment processed successfully! Balance cleared.");
+            closeModal('modal-pay-balance');
+            renderUserDashboard();
+        }
+
+        // --- ADMIN DASHBOARD LOGIC ---
+        function switchAdminTab(tabKey) {
+            document.querySelectorAll('.admin-nav-item').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                el.classList.add('text-slate-400', 'hover:bg-slate-800');
+            });
+            const activeNav = document.getElementById(`admin-nav-${tabKey}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+            const activeTab = document.getElementById(`admin-tab-${tabKey}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+        }
+
+        function renderAdminDashboard() {
+            // Metrics Calculation
+            const totalCopies = books.reduce((acc, b) => acc + parseInt(b.totalCopies), 0);
+            const active = transactions.filter((loan) => loan.status === 'borrowed');
+            const overdue = active.filter((loan) => new Date(`${loan.dueDate}T00:00:00`) < new Date(`${todayStr}T00:00:00`));
+            const activeLoans = active.length;
+            const overdueCount = overdue.length;
+            const totalFines = overdue.reduce((sum, loan) => {
+                const daysLate = Math.ceil((new Date(`${todayStr}T00:00:00`) - new Date(`${loan.dueDate}T00:00:00`)) / 86400000);
+                return sum + Math.max(0, daysLate) * 0.5;
+            }, 0);
+
+            document.getElementById('admin-stat-total-books').textContent = totalCopies;
+            document.getElementById('admin-stat-active-loans').textContent = activeLoans;
+            document.getElementById('admin-stat-overdue').textContent = overdueCount;
+            document.getElementById('admin-stat-total-fines').textContent = `$${totalFines.toFixed(2)}`;
+
+            const overdueBadge = document.getElementById('admin-badge-overdue');
+            if (overdueCount > 0) {
+                overdueBadge.textContent = overdueCount;
+                overdueBadge.classList.remove('hidden');
+            } else {
+                overdueBadge.classList.add('hidden');
+            }
+
+            renderAdminRecentFeed();
+            renderAdminInventoryTable();
+            renderAdminBorrowedTable();
+            renderAdminPaymentsTable();
+            renderAdminPatronsGrid();
+            populateModalSelects();
+        }
+
+        function renderAdminRecentFeed() {
+            const feed = document.getElementById('admin-recent-feed');
+            feed.innerHTML = '';
+
+            const sorted = transactions.slice(0, 5);
+            sorted.forEach(t => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs";
+                item.innerHTML = `
+                    <div>
+                        <p class="font-bold text-slate-900">${escapeHtml(t.Book?.title || 'Book')}</p>
+                        <p class="text-slate-500">Student: ${escapeHtml(t.User?.name || 'Unknown borrower')}</p>
+                    </div>
+                    <span class="px-2.5 py-0.5 rounded-full font-bold ${t.status === 'returned' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                        ${t.status === 'returned' ? 'RETURNED' : 'BORROWED'}
+                    </span>
+                `;
+                feed.appendChild(item);
+            });
+        }
+
+        function renderAdminInventoryTable() {
+            const tbody = document.getElementById('admin-inventory-tbody');
+            const searchVal = (document.getElementById('admin-inventory-search').value || '').toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = books.filter(b => b.title.toLowerCase().includes(searchVal) || b.author.toLowerCase().includes(searchVal) || b.isbn.toLowerCase().includes(searchVal));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">No books in inventory yet. Use “Add New Book” to add titles to the shared catalog.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(b => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(b.title)} <span class="block text-xs text-slate-400 font-normal">${escapeHtml(b.author)}</span></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-600">${escapeHtml(b.isbn)}</td>
+                    <td class="py-3 px-4"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-semibold">${escapeHtml(b.category)}</span></td>
+                    <td class="py-3 px-4 text-center font-mono text-xs font-semibold">${escapeHtml(b.shelf)}</td>
+                    <td class="py-3 px-4 text-center font-bold text-slate-800">${b.totalCopies}</td>
+                    <td class="py-3 px-4 text-center font-bold ${b.availableCopies > 0 ? 'text-indigo-600' : 'text-rose-500'}">${b.availableCopies}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="editAdminBook('${b.id}')" class="p-1.5 text-slate-400 hover:text-indigo-600"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="deleteAdminBook('${b.id}')" class="p-1.5 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function startNewBookEntry() {
+            document.getElementById('form-add-book').reset();
+            document.getElementById('book-edit-id').value = '';
+            document.getElementById('modal-book-title').textContent = 'Add New Book Record';
+            openModal('modal-add-book');
+        }
+
+        function editAdminBook(id) {
+            const book = books.find(b => String(b.id) === String(id));
+            if (!book) return;
+            document.getElementById('modal-book-title').textContent = "Edit Book Details";
+            document.getElementById('book-edit-id').value = book.id;
+            document.getElementById('book-title-input').value = book.title;
+            document.getElementById('book-author-input').value = book.author;
+            document.getElementById('book-isbn-input').value = book.isbn;
+            document.getElementById('book-category-input').value = book.category;
+            document.getElementById('book-shelf-input').value = book.shelf;
+            document.getElementById('book-quantity-input').value = book.totalCopies;
+            openModal('modal-add-book');
+        }
+
+        async function deleteAdminBook(id) {
+            try {
+                await apiRequest(`/api/books/${id}`, { method: 'DELETE' });
+                showToast("Book deleted from catalog");
+                await refreshLibraryViews();
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        async function saveBookRecord(e) {
+            e.preventDefault();
+            const editId = document.getElementById('book-edit-id').value;
+            const payload = {
+                title: document.getElementById('book-title-input').value.trim(),
+                author: document.getElementById('book-author-input').value.trim(),
+                isbn: document.getElementById('book-isbn-input').value.trim(),
+                category: document.getElementById('book-category-input').value,
+                shelf: document.getElementById('book-shelf-input').value.trim(),
+                quantity: document.getElementById('book-quantity-input').value
+            };
+
+            try {
+                await apiRequest(editId ? `/api/books/${editId}` : '/api/books', {
+                    method: editId ? 'PUT' : 'POST',
+                    body: JSON.stringify(payload)
+                });
+                showToast(editId ? "Updated book entry!" : `Added "${payload.title}" to inventory`);
+                closeModal('modal-add-book');
+                document.getElementById('form-add-book').reset();
+                document.getElementById('book-edit-id').value = '';
+                await refreshLibraryViews();
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        function renderAdminBorrowedTable() {
+            const tbody = document.getElementById('admin-borrowed-tbody');
+            const searchVal = (document.getElementById('admin-borrowed-search').value || '').toLowerCase();
+            tbody.innerHTML = '';
+
+            const filtered = transactions.filter((loan) => {
+                const title = loan.Book?.title || '';
+                const borrower = loan.User?.name || '';
+                const email = loan.User?.email || '';
+                return `${title} ${borrower} ${email} ${loan.status}`.toLowerCase().includes(searchVal);
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">No borrowing records found.</td></tr>';
+                return;
+            }
+
+            filtered.forEach((loan) => {
+                const isReturned = loan.status === 'returned';
+                const daysLate = Math.max(0, Math.ceil((Date.now() - new Date(`${loan.dueDate}T00:00:00`)) / 86400000));
+                const fine = !isReturned ? daysLate * 0.5 : 0;
+                const isOverdue = !isReturned && daysLate > 0;
+                const status = isReturned ? 'RETURNED' : isOverdue ? 'OVERDUE' : 'BORROWED';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-xs font-bold text-slate-500">${loan.id}</td>
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(loan.Book?.title || 'Book removed')}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-700">${escapeHtml(loan.User?.name || 'Unknown borrower')}<span class="block text-xs text-slate-400">${escapeHtml(loan.User?.email || '')}</span></td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${escapeHtml(loan.createdAt?.slice(0, 10) || '')}</td>
+                    <td class="py-3 px-4 text-xs font-semibold text-slate-800">${escapeHtml(loan.dueDate)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${isReturned ? 'bg-slate-100 text-slate-600' : (isOverdue ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800')}">
+                            ${status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center text-xs font-bold ${isOverdue ? 'text-rose-600' : 'text-slate-400'}">
+                        $${fine.toFixed(2)}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        ${!isReturned ? `<button onclick="processAdminReturn(${Number(loan.id)})" class="px-3 py-1 bg-emerald-600 text-white font-bold text-xs rounded-lg shadow">Process Return</button>` : `<span class="text-xs text-slate-400">Returned ${escapeHtml(loan.returnedAt || '')}</span>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function processAdminReturn(loanId) {
+            try {
+                await apiRequest(`/api/loans/${loanId}/return`, { method: 'POST' });
+                showToast('Book return processed successfully.');
+                await refreshLibraryViews();
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        function renderAdminPaymentsTable() {
+            const tbody = document.getElementById('admin-payments-tbody');
+            tbody.innerHTML = '';
+
+            patrons.forEach(p => {
+                let patronBalance = 0;
+                transactions.filter(t => t.patronId === p.id).forEach(t => {
+                    const info = calculateFine(t.dueDate);
+                    if (info.isOverdue && !t.finePaid) patronBalance += info.fine;
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono text-xs font-bold text-slate-500">${p.id}</td>
+                    <td class="py-3 px-4 font-bold text-slate-900">${escapeHtml(p.name)}</td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${p.type}</td>
+                    <td class="py-3 px-4 text-center font-bold text-slate-700">${p.activeBorrows}</td>
+                    <td class="py-3 px-4 text-center font-bold ${patronBalance > 0 ? 'text-rose-600' : 'text-slate-400'}">$${patronBalance.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-right">
+                        ${patronBalance > 0 ? `<button onclick="settlePatronBalanceAdmin('${p.id}')" class="px-3 py-1 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow">Mark Paid</button>` : `<span class="text-xs text-emerald-600 font-bold">Clear</span>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function settlePatronBalanceAdmin(patronId) {
+            transactions.filter(t => t.patronId === patronId).forEach(t => {
+                t.finePaid = true;
+            });
+            showToast("Marked student fine balance as settled!");
+            renderAdminDashboard();
+        }
+
+        function renderAdminPatronsGrid() {
+            const grid = document.getElementById('admin-patrons-grid');
+            grid.innerHTML = '';
+
+            patrons.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold text-indigo-600">${p.id}</span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${p.type}</span>
+                        </div>
+                        <h4 class="font-extrabold text-slate-900 text-base">${escapeHtml(p.name)}</h4>
+                        <p class="text-xs text-slate-500">${escapeHtml(p.email)}</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between text-xs">
+                        <span class="text-slate-500 font-medium">Active Loans:</span>
+                        <span class="font-bold text-indigo-600">${p.activeBorrows} Items</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function saveNewPatron(e) {
+            e.preventDefault();
+            const name = document.getElementById('patron-name-input').value;
+            const email = document.getElementById('patron-email-input').value;
+            const type = document.getElementById('patron-type-input').value;
+
+            const newP = {
+                id: "P-" + Math.floor(1000 + Math.random() * 9000),
+                name, email, type, activeBorrows: 0, balancePaid: 0
+            };
+            patrons.push(newP);
+            showToast(`Registered patron ${name}`);
+            closeModal('modal-add-patron');
+            renderAdminDashboard();
+        }
+
+        function saveIssueLoan(e) {
+            e.preventDefault();
+            const patronId = document.getElementById('issue-patron-select').value;
+            const bookId = document.getElementById('issue-book-select').value;
+            const issueDate = document.getElementById('issue-date-input').value;
+            const dueDate = document.getElementById('issue-due-date-input').value;
+
+            const book = books.find(b => b.id === bookId);
+            const patron = patrons.find(p => p.id === patronId);
+
+            if (book && patron && book.availableCopies > 0) {
+                book.availableCopies--;
+                book.borrowCount = (book.borrowCount || 0) + 1;
+                patron.activeBorrows++;
+
+                const newTrx = {
+                    id: "TRX-" + Math.floor(1000 + Math.random() * 9000),
+                    bookId: book.id,
+                    bookTitle: book.title,
+                    patronId: patron.id,
+                    patronName: patron.name,
+                    issueDate,
+                    dueDate,
+                    returnDate: null,
+                    status: "ISSUED",
+                    finePaid: false
+                };
+                transactions.push(newTrx);
+                showToast(`Loan issued for ${patron.name}`);
+                closeModal('modal-issue-book');
+                refreshLibraryViews();
+            }
+        }
+
+        function populateModalSelects() {
+            const patronSelect = document.getElementById('issue-patron-select');
+            patronSelect.innerHTML = patrons.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${p.id})</option>`).join('');
+
+            const bookSelect = document.getElementById('issue-book-select');
+            const available = books.filter(b => b.availableCopies > 0);
+            bookSelect.innerHTML = available.map(b => `<option value="${b.id}">${escapeHtml(b.title)} (${b.availableCopies} left)</option>`).join('');
+
+            document.getElementById('issue-date-input').value = todayStr;
+            document.getElementById('issue-due-date-input').value = futureDueDateStr;
+        }
+
+        // --- UTILS ---
+        function calculateFine(dueDateStr) {
+            const due = new Date(dueDateStr);
+            const now = new Date(todayStr);
+            const diffTime = now - due;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                return { isOverdue: true, daysLate: diffDays, fine: diffDays * 0.50 };
+            }
+            return { isOverdue: false, daysLate: 0, fine: 0 };
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = "pointer-events-auto px-4 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xl border border-white/10 flex items-center gap-2 transition-all duration-300 opacity-0 translate-y-2";
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${escapeHtml(msg)}`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('opacity-0', 'translate-y-2'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+        }
+    </script>
+{{> footer }}
