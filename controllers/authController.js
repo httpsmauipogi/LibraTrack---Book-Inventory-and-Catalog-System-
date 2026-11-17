@@ -31,8 +31,6 @@ import "../models/loanModel.js";
 await sequelize.sync();
 
 export const loginPage = (req, res) => res.render("login", { title: "Login", authCard: "login" });
-export const registerPage = (req, res) => res.render("login", { title: "Register", authCard: "register" });
-export const forgotPasswordPage = (req, res) => res.render("forgotpassword", { title: "Forgot Password" });
 export const dashboardPage = async (req, res) => {
   if (!req.session.userId) return res.redirect("/login");
   try {
@@ -58,42 +56,10 @@ export const dashboardPage = async (req, res) => {
       });
     }
 
-    res.render("userDashborad", {
-      title: "User Dashboard",
-      user: account,
-      userInitials
-    });
+    return res.status(403).send("Patron access is temporarily unavailable while the user system is being integrated.");
   } catch (error) {
     console.error("Could not load account:", error);
     res.status(500).send("Could not load your account. Please try again.");
-  }
-};
-
-export const updateProfile = async (req, res) => {
-  if (!req.session.userId) return res.redirect("/login");
-  const signedInUser = await User.findByPk(req.session.userId, { attributes: ["role"] });
-  if (!signedInUser) return req.session.destroy(() => res.redirect("/login"));
-  if (signedInUser.role === "admin" || signedInUser.role === "staff") {
-    return res.status(403).send("Administrator profiles cannot be changed here.");
-  }
-
-  const name = String(req.body.name || "").trim();
-  const email = String(req.body.email || "").trim().toLowerCase();
-  if (!name || !email) {
-    return res.status(400).send("Name and email are required.");
-  }
-
-  try {
-    const conflictingUser = await User.findOne({ where: { email } });
-    if (conflictingUser && String(conflictingUser.id) !== String(req.session.userId)) {
-      return res.status(409).send("That email address is already in use.");
-    }
-
-    await User.update({ name, email }, { where: { id: req.session.userId } });
-    res.redirect("/dashboard");
-  } catch (error) {
-    console.error("Could not update profile:", error);
-    res.status(500).send("Could not update your profile. Please try again.");
   }
 };
 
@@ -103,7 +69,7 @@ export const loginUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ where: { email } });
-    const match = user && await bcrypt.compare(password, user.password);
+    const match = user && (user.role === "admin" || user.role === "staff") && await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(401).render("login", {
         title: "Login",
@@ -147,45 +113,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const registerUser = async (req, res) => {
-  const name = String(req.body.name || "").trim();
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const password = String(req.body.password || "");
-
-  const showError = (message, status = 400) => res.status(status).render("login", {
-    title: "Register",
-    authCard: "register",
-    registerError: message
-  });
-
-  if (!name || !email || password.length < 8) {
-    return showError("Enter your name and email, and use a password with at least 8 characters.");
-  }
-
-  try {
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) return showError("An account with that email already exists.", 409);
-
-    const hashed = await bcrypt.hash(password, 10);
-    // Never accept a role from public registration; new accounts are regular patrons.
-    const user = await User.create({ name, email, password: hashed, role: "visitors" });
-
-    req.session.regenerate((error) => {
-      if (error) return showError("Your account was created, but sign-in failed. Please log in.", 500);
-
-      req.session.userId = user.id;
-      req.session.save((saveError) => {
-        if (saveError) return showError("Your account was created, but sign-in failed. Please log in.", 500);
-        res.redirect("/dashboard");
-      });
-    });
-  } catch (error) {
-    console.error("Registration failed:", error);
-    return showError("Registration is temporarily unavailable. Please try again.", 500);
-  }
-};
-
 export const logoutUser = (req, res) => {
-  if (!req.session) return res.redirect("/login");
-  req.session.destroy(() => res.redirect("/login"));
+  if (!req.session) return res.redirect("/");
+  req.session.destroy(() => res.redirect("/"));
 };

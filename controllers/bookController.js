@@ -1,4 +1,3 @@
-import { Op } from "sequelize";
 import { Book } from "../models/bookModel.js";
 import { Loan } from "../models/loanModel.js";
 import { User } from "../models/userModel.js";
@@ -110,55 +109,17 @@ export const deleteBook = async (req, res) => {
   }
 };
 
-export const borrowBook = async (req, res) => {
-  const user = await currentUser(req);
-  if (!user) return res.status(401).json({ error: "Sign in to borrow a book." });
-  if (user.role === "admin" || user.role === "staff") {
-    return res.status(403).json({ error: "Patron accounts are required to borrow books." });
-  }
-
-  const transaction = await sequelize.transaction();
-  try {
-    const book = await Book.findOne({
-      where: { id: req.params.id, availableCopies: { [Op.gt]: 0 } },
-      transaction,
-      lock: transaction.LOCK.UPDATE
-    });
-    if (!book) {
-      await transaction.rollback();
-      return res.status(409).json({ error: "This book is not currently available." });
-    }
-
-    const issueDate = new Date();
-    const dueDate = new Date(issueDate);
-    dueDate.setDate(dueDate.getDate() + 14);
-    book.availableCopies -= 1;
-    book.borrowCount += 1;
-    await book.save({ transaction });
-    const loan = await Loan.create({
-      UserId: user.id,
-      BookId: book.id,
-      dueDate: dueDate.toISOString().slice(0, 10)
-    }, { transaction });
-    await transaction.commit();
-    res.status(201).json({ loan, book });
-  } catch (error) {
-    if (!transaction.finished) await transaction.rollback();
-    console.error("Could not borrow book:", error);
-    res.status(500).json({ error: "Could not complete the borrowing request." });
-  }
-};
-
 export const listMyLoans = async (req, res) => {
   const user = await currentUser(req);
   if (!user) return res.status(401).json({ error: "Sign in to view your loans." });
+  if (user.role !== "admin" && user.role !== "staff") {
+    return res.status(503).json({ error: "Patron loan access is temporarily unavailable while the user-system integration is being prepared." });
+  }
   try {
-    const isStaff = user.role === "admin" || user.role === "staff";
     const loans = await Loan.findAll({
-      where: isStaff ? undefined : { UserId: user.id },
       include: [
         { model: Book, attributes: ["title", "author", "isbn"] },
-        ...(isStaff ? [{ model: User, attributes: ["id", "name", "email"] }] : [])
+        { model: User, attributes: ["id", "name", "email"] }
       ],
       order: [["createdAt", "DESC"]]
     });

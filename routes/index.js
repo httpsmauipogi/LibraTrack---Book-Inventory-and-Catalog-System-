@@ -29,22 +29,17 @@ import { homePage } from "../controllers/homeController.js";
 const router = express.Router();
 router.get("/", homePage);
 
-import { loginPage, registerPage, forgotPasswordPage, dashboardPage, updateProfile, loginUser, registerUser, logoutUser } from "../controllers/authController.js";
-import { listBooks, createBook, updateBook, deleteBook, borrowBook, listMyLoans, returnLoan } from "../controllers/bookController.js";
+import { loginPage, dashboardPage, loginUser, logoutUser } from "../controllers/authController.js";
+import { listBooks, createBook, updateBook, deleteBook, listMyLoans, returnLoan } from "../controllers/bookController.js";
 
 router.get("/login", loginPage);
 router.post("/login", loginUser);
-router.get("/register", registerPage);
-router.post("/register", registerUser);
-router.get("/forgot-password", forgotPasswordPage);
 router.get("/dashboard", dashboardPage);
-router.post("/profile", updateProfile);
 router.get("/logout", logoutUser);
 router.get("/api/books", listBooks);
 router.post("/api/books", createBook);
 router.put("/api/books/:id", updateBook);
 router.delete("/api/books/:id", deleteBook);
-router.post("/api/books/:id/borrow", borrowBook);
 router.get("/api/loans", listMyLoans);
 router.post("/api/loans/:id/return", returnLoan);
 

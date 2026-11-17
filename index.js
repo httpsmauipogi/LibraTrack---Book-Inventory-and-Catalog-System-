@@ -30,6 +30,7 @@ import flash from "connect-flash";
 import router from "./routes/index.js";
 import fs from 'fs';
 import hbs from "hbs";
+import { randomBytes } from "crypto";
 import { fileURLToPath, pathToFileURL } from "url";
 import { dirname } from "path";
 
@@ -46,15 +47,35 @@ export const resolvePort = (preferredPort, busyPorts = new Set()) => {
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+const sessionSecret = process.env.SESSION_SECRET || (
+  process.env.NODE_ENV === "production" ? null : randomBytes(32).toString("hex")
+);
+
+if (!sessionSecret) {
+  throw new Error("SESSION_SECRET must be set in production.");
+}
+
+if (process.env.TRUST_PROXY) {
+  const trustProxy = process.env.TRUST_PROXY;
+  app.set(
+    "trust proxy",
+    trustProxy === "true" ? true : /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy
+  );
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(process.cwd(), "public")));
 
 app.use(session({
-  secret: "xianfire-secret-key",
+  secret: sessionSecret,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production"
+  }
 }));
 app.use(flash());
 
